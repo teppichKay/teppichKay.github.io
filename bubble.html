@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="./style.css">
+	<script src="./dist/Chart.min.js"></script>
+	<script src="./utils.js"></script>
+</head>
+<body>
+	<div class="content">
+		<div class="wrapper"><canvas id="chart-0"></canvas></div>
+	</div>
+
+	<div class="sider">
+		<ul>
+			<li><b>Twitter account: </b><span id="user-name"></span></li>
+			<li><b>Account description: </b><span id="description"></span></li>
+			<li><b>Tweet: </b><span id="tweet"></span></li>
+			<li><b>Account URL: </b><span id="url"></span></li>
+			<li><b>Followers: </b><span id="followers"></span></li>
+		</ul>
+	</div>
+
+<script>
+var MIN_XY = -150;
+var MAX_XY = 100;
+
+var utils = Samples.utils;
+
+
+function colorize(opaque, context) {
+    var value = context.dataset.data[context.dataIndex];
+    var x = value.x / 100;
+    var y = value.y / 100;
+    var r = x < 0 && y < 0 ? 250 : x < 0 ? 150 : y < 0 ? 50 : 0;
+    var g = x < 0 && y < 0 ? 0 : x < 0 ? 50 : y < 0 ? 150 : 250;
+    var b = x < 0 && y < 0 ? 0 : x > 0 && y > 0 ? 250 : 150;
+    var a = opaque ? 1 : 0.5 * value.v / 1000;
+
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+var testdata = [
+    {
+        "user_name": "Compleet Feet",
+        "description": "Compleet Feet: progressive Hampshire podiatry. Hi-tech solutions e.g Foot Volumising  Fillers, lasers. Think out of the shoe box!",
+        "followers_count": 200,
+        "tweets": "@compleetfeet we can determine and explain why you you are struggling with foot pain. Compleet Feet have all you need to become pain free. #compleetfeetfootsolutions #compleetfeet #hampshirepainfreefeet #hampshirepodiatry #podiatry #podiatryMSK #altonfeetmatter https:\/\/t.co\/YUG886GGsj",
+        "url": "http:\/\/www.compleetfeet.co.uk"
+    },
+    {
+        "user_name": "FARO Technologies",
+        "description": "The world's most trusted source for 3D measurement and imaging technology",
+        "followers_count": 4648,
+        "tweets": "",
+        "url": "faro.com"
+    },
+    {
+        "user_name": "BrooklynRunCo",
+        "description": "Brooklyn's only independent running specialty shop.",
+        "followers_count": 1169,
+        "tweets": "",
+        "url": "https://twitter.com/BrooklynRunCo"
+    },
+    {
+        "user_name": "Orthofeet",
+        "description": "Designer & manufacturer of #orthotic #footwear that alleviates foot pain & discomfort from injury, #diabetes, #arthritis & more #therapeutic #shoe",
+        "followers_count": 1139,
+        "tweets": "The innovative #shoe construction, along with the anatomical orthotic insoles have proven to help millions of users improve mobility, enhance #comfort and get relief of heel, foot, knee and lower back #pain. Test our products Risk-Free for up to 60 days",
+        "url": "http:\/\/www.orthofeet.com"
+    },
+	{
+        "user_name": "STHLMthings",
+        "description": "THINGS is a unique co-working space for deep tech start-ups solving real problems, often with industrial applications. \nNewsletter reg: http://eepurl.com/c-f_RL",
+        "followers_count": 1885,
+        "tweets": "Alumnus @Volumental in the news at @didigital_se. Their #3D foot scanning product, launched back in 2016 is in stores around the globe. Now they are setting their sights on the online market🚀\nhttps://t.co/xRTYxv5R5v",
+        "url": ""
+    },
+    {
+        "user_name": "TrigentSoftware",
+        "description": "#OutsourceSoftwareDevelopment Services - #ProductDevelopment, #TestAutomation, #BusinessIntelligence, #SharePoint, #Java & #.Net",
+        "followers_count": 1588,
+        "tweets": "Our client Aetrex launches an innovative iPad based mobile foot-scanning app for their young customers.  The avatar… https://t.co/4ZXtNdsXwh",
+        "url": ""
+    },
+    {
+        "user_name": "FireflyOrthoses",
+        "description": "Provider of premium custom made foot orthoses.\nThe Firefly MSK Workshop is returning to Ireland this September and is now enrolling at http://firefly.ie/learn",
+        "followers_count": 827,
+        "tweets": "💥COMING SOON 💥\nFUSION - Firefly's unique 3D foot scanning app designed specifically for the podiatry profession.… https://t.co/7x5NGx3S4h",
+        "url": ""
+    },
+
+    {
+        "user_name": "True Fit",
+        "description": "True Fit is footwear and apparel’s discovery platform. We help people find clothes and shoes they’ll love and keep. Find Your True Fit. ",
+        "followers_count": 1588,
+        "tweets": "Learn how we're combining data, artificial intelligence and @Aetrex foot scanning technology to power personalized footwear recommendations: https://hubs.ly/H0lW8zK0 #personalization #retailtech #ecommerce #footwear #recommendation",
+        "url": ""
+    },
+    {
+        "user_name": "Red Wing Shoes Sacramento",
+        "description": "Chain retailer offering a traditional collection of handcrafted leather boots for work & recreation.\n#workboots #redwingshoes",
+        "followers_count": 80,
+        "tweets": "Here at Red Wing, we pride ourselves in our expert fitting. With a quick digital foot scan, we identify arch type, foot size, and underfoot pressure points. We guarantee we can find the perfect boots for you. https:\/\/t.co\/49jKVflUhl https:\/\/t.co\/8BDzHXyPRS",
+        "url": "http:\/\/stores.redwing.com\/sacramento-ca"
+    },
+    {
+        "user_name": "didigital_se",
+        "description": "Sveriges största nyhetssajt om digitala affärer. En del av @dagensindustri. Ansvarig utgivare: Peter Fellman. Följ också @nordictechlist.",
+        "followers_count": 20481,
+        "tweets": "RT @STHLMthings: Alumnus @Volumental in the news at @didigital_se. Their #3D foot scanning product, launched back in 2016 is in stores around",
+        "url": ""
+    },
+]
+
+function generateData() {
+    var data = [];
+
+	var testData2 = testdata.concat(getDataPiece2())
+    var i;
+	var name = [];
+    for (i = 0; i < testData2.length; ++i) {
+		name.push(testData2[i].user_name)
+        data.push({
+            x: Math.random()*2*MAX_XY-MAX_XY,
+            y: Math.random()*2*MAX_XY-MAX_XY,
+            v: testData2[i].followers_count,
+        });
+    }
+	console.log(name)
+    return data;
+}
+
+function generateLabels() {
+	var labels = [];
+	var testData2 = testdata.concat(getDataPiece2())
+	for (var i = 0; i < testData2.length; ++i) {
+
+        labels.push(testData2[i].user_name);
+
+		
+    }
+    return labels;
+}
+
+function updateSider(n, d, f, t, u) {
+	document.getElementById('user-name').innerText = n || '';
+	document.getElementById('description').innerText = d || '';
+	document.getElementById('followers').innerText = f || '';
+	document.getElementById('tweet').innerText = t || '';
+	document.getElementById('url').innerText = u || '';
+}
+
+
+function generateTweets() {
+	var ts = [];
+
+	var testData2 = testdata.concat(getDataPiece2())
+	for (var i = 0; i < testData2.length; ++i) {
+        ts.push(testData2[i].tweets);
+    }
+    return ts;
+}
+
+function generateDescriptions() {
+	var out = [];
+	var testData2 = testdata.concat(getDataPiece2())
+	for (var i = 0; i < testData2.length; ++i) {
+        out.push(testData2[i].descriptions);
+    }
+    return out;
+}
+
+function generateFollowers() {
+	var out = [];
+	var testData2 = testdata.concat(getDataPiece2())
+	for (var i = 0; i < testData2.length; ++i) {
+        out.push(testData2[i].followers_count);
+    }
+    return out;
+}
+
+function generateURLs() {
+	var out = [];
+	var testData2 = testdata.concat(getDataPiece2())
+	for (var i = 0; i < testData2.length; ++i) {
+        out.push(testData2[i].url);
+    }
+    return out;
+}
+
+var data = {
+	labels: generateLabels(),
+	tweets: generateTweets(),
+	followers: generateFollowers(),
+	descriptions: generateDescriptions(),
+	urls: generateURLs(), 
+    datasets: [{
+        data: generateData()
+    }]
+};
+
+var options = {
+    aspectRatio: 1,
+	title: {
+		display: true,
+		fontSize: 20,
+		padding: 20,
+		text: 'TWITTER IS NOT FUN',
+	},
+	legend: {
+		display: false,
+	},
+    tooltips: {
+		position: 'average',
+		mode: 'index',
+		intersect: false,
+		callbacks: {
+			title: function(item, data) {
+				var label = data['labels'][item[0].index];
+				var tweet = data['tweets'][item[0].index];
+				var follower = data['followers'][item[0].index];
+				var descp = data['descriptions'][item[0].index];
+				var url = data['urls'][item[0].index];
+				updateSider(label, descp, follower, tweet, url);
+				return label;
+			},
+			label: function(item, data) {
+				{{/* console.log(data['tweets'][item[0].index])
+				return data['tweets'][item[0].index]; */}}
+			},
+		}
+	},
+
+	axes: false,
+    elements: {
+        point: {
+            backgroundColor: colorize.bind(null, false),
+            borderColor: colorize.bind(null, true),
+
+            borderWidth: function(context) {
+                return Math.min(Math.max(1, context.datasetIndex + 1), 8);
+            },
+
+            hoverBackgroundColor: 'transparent',
+
+            hoverBorderColor: function(context) {
+                return utils.color(context.datasetIndex);
+            },
+            radius: function(context) {
+                var value = context.dataset.data[context.dataIndex];
+                var size = context.chart.width;
+                var base = Math.abs(value.v) / 10000;
+                return (size / 24) * base;
+            }
+        }
+    },
+
+};
+
+
+
+
+
+
+function getDataPiece2() {
+	var datapiece2=[
+  {
+    "results__created_at": "Sat Nov 30 15:03:26 +0000 2019",
+    "results__extended_tweet__full_text": "mid way in my KEYNOTE Performing computer enhanced footwear, artistic research in action @ INDISCIPLINES artistic research conference - Barcelona ESMUC / University of Barcelona thank you to Judit... https://t.co/l5IFv5LEyu",
+    "results__user__followers_count": 13041,
+    "results__user__friends_count": 2954,
+    "results__user__name": "Alexandra Murray-Leslie"
+  },
+  {
+    "results__created_at": "Thu Nov 21 22:33:24 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 9108,
+    "results__user__friends_count": 1925,
+    "results__user__name": "Rich Willy"
+  },
+  {
+    "results__created_at": "Sat Nov 30 11:30:41 +0000 2019",
+    "results__extended_tweet__full_text": "“By 2030 the global apparel and footwear industry will grow by an estimated 80%, according to industry research. If business continues as usual, humanity may require two planets’ worth of resources by 2050.” https://t.co/Dcr1DmaZbB",
+    "results__user__followers_count": 7527,
+    "results__user__friends_count": 3089,
+    "results__user__name": "Susan S. Szenasy"
+  },
+  {
+    "results__created_at": "Wed Nov 13 15:17:36 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 4834,
+    "results__user__friends_count": 81,
+    "results__user__name": "IntSoc Biomechanics"
+  },
+  {
+    "results__created_at": "Thu Dec 05 17:23:01 +0000 2019",
+    "results__extended_tweet__full_text": "Delighted to host our annual @UCL Locard White #prize lecture tonight with 2019 winner Chloe Unsworth speaking to our #MScCFS class of 2020 about her research on footwear in #crime reconstruction. Key take home: don’t let something new to you, stop you from trying! #createthenew https://t.co/wCyLqFDkUV",
+    "results__user__followers_count": 4202,
+    "results__user__friends_count": 615,
+    "results__user__name": "UCL ForensicSciences"
+  },
+  {
+    "results__created_at": "Wed Nov 13 01:11:49 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 4125,
+    "results__user__friends_count": 754,
+    "results__user__name": "Simon Bartold"
+  },
+  {
+    "results__created_at": "Mon Dec 02 19:06:50 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 3749,
+    "results__user__friends_count": 4875,
+    "results__user__name": "Ana Cristina De Lion"
+  },
+  {
+    "results__created_at": "Wed Nov 13 01:00:09 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 3187,
+    "results__user__friends_count": 269,
+    "results__user__name": "Craig Payne"
+  },
+  {
+    "results__created_at": "Sat Nov 23 12:45:28 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 2994,
+    "results__user__friends_count": 2062,
+    "results__user__name": "National Biomechanics Day"
+  },
+  {
+    "results__created_at": "Wed Nov 13 01:11:45 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 2836,
+    "results__user__friends_count": 612,
+    "results__user__name": "Bruce Williams"
+  },
+  {
+    "results__created_at": "Fri Dec 06 16:29:48 +0000 2019",
+    "results__extended_tweet__full_text": "@interwarintell @Karrimor @SportsDirectUK @CampfireMagUK @RegattaOutdoors @LowaBoots I wish I'd done more research earlier... Seems they are just a name now, not about the footwear! Still the replacments feel comfy so far! Now where's that rain... 😉",
+    "results__user__followers_count": 2523,
+    "results__user__friends_count": 1409,
+    "results__user__name": "Ryan Gearing"
+  },
+  {
+    "results__created_at": "Mon Dec 02 18:31:45 +0000 2019",
+    "results__extended_tweet__full_text": "Fashion Research Network is sad to hear of the passing of legandary shoemaker Terry de Havilland this weekend famous for his glamourous, outlandish and ever-inspiring footwear made for partying and living life to the full! https://t.co/j6oRqaARxS",
+    "results__user__followers_count": 2100,
+    "results__user__friends_count": 2557,
+    "results__user__name": "FRN"
+  },
+  {
+    "results__created_at": "Fri Nov 22 05:26:00 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1919,
+    "results__user__friends_count": 3357,
+    "results__user__name": "Marilou McFarlane"
+  },
+  {
+    "results__created_at": "Tue Nov 12 20:21:01 +0000 2019",
+    "results__extended_tweet__full_text": "November is #FallsPreventionMonth and #Ontario was hit with snow this week. Winter weather can cause falls in an instant that result in serious injuries. \\n\\niDAPT, the research arm of @TRI_UHN, has rated winter footwear for slip resistance: https://t.co/d3ZVbcTsco https://t.co/9p55o2lA05",
+    "results__user__followers_count": 1832,
+    "results__user__friends_count": 161,
+    "results__user__name": "College of PTs"
+  },
+  {
+    "results__created_at": "Thu Nov 28 16:31:27 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1693,
+    "results__user__friends_count": 925,
+    "results__user__name": "Anna Bird"
+  },
+  {
+    "results__created_at": "Fri Nov 15 17:05:15 +0000 2019",
+    "results__extended_tweet__full_text": "Tariff Quote Watch: Wolverine Takes Tariffs In Its Stride With Restructuring, Price Hikes\\n#globaltrade #footwear\\nhttps://t.co/zJtBqbAn5v https://t.co/NTAJu45LGh",
+    "results__user__followers_count": 1679,
+    "results__user__friends_count": 761,
+    "results__user__name": "Panjiva"
+  },
+  {
+    "results__created_at": "Wed Nov 13 17:05:19 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1679,
+    "results__user__friends_count": 761,
+    "results__user__name": "Panjiva"
+  },
+  {
+    "results__created_at": "Wed Nov 13 07:46:45 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1626,
+    "results__user__friends_count": 568,
+    "results__user__name": "StaffsBiomechanics"
+  },
+  {
+    "results__created_at": "Sat Nov 30 10:49:40 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1531,
+    "results__user__friends_count": 203,
+    "results__user__name": "PROSTHETICS NETWORK"
+  },
+  {
+    "results__created_at": "Fri Nov 29 23:46:48 +0000 2019",
+    "results__extended_tweet__full_text": "Great paper @Hill523Jason \\n\\nKey concepts in children’s footwear research: a scoping review focusing on therapeutic footwear\\n\\nhttps://t.co/oaMuHceAwC",
+    "results__user__followers_count": 1502,
+    "results__user__friends_count": 401,
+    "results__user__name": "ORTHOTICS NETWORK"
+  },
+  {
+    "results__created_at": "Sun Dec 01 20:57:01 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1396,
+    "results__user__friends_count": 1581,
+    "results__user__name": "Footwear Today"
+  },
+  {
+    "results__created_at": "Tue Dec 03 13:14:44 +0000 2019",
+    "results__extended_tweet__full_text": "According to the latest information by Mr. Le Xuan Duong, Director of the Footwear Research and Development Center at the Vietnam Leather, Footwear and Handbag Association (#Lefaso),  - https://t.co/tPGKXf6htd",
+    "results__user__followers_count": 1357,
+    "results__user__friends_count": 379,
+    "results__user__name": "Leather Insiders"
+  },
+  {
+    "results__created_at": "Wed Dec 04 14:02:32 +0000 2019",
+    "results__extended_tweet__full_text": "A new report from @Global_GWI finds that the global wellness market, including the sports, active recreation, fitness &amp; mindful movement along with equipment and supplies, apparel and footwear, and technology, is worth $4.5 trillion. Download the report: https://t.co/a6Zx7tATHF",
+    "results__user__followers_count": 1151,
+    "results__user__friends_count": 239,
+    "results__user__name": "National PA Plan"
+  },
+  {
+    "results__created_at": "Mon Dec 02 10:49:52 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1136,
+    "results__user__friends_count": 604,
+    "results__user__name": "Martin Ricker"
+  },
+  {
+    "results__created_at": "Fri Nov 29 23:50:54 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 1102,
+    "results__user__friends_count": 740,
+    "results__user__name": "Suzanne Faulkner"
+  },
+  {
+    "results__created_at": "Sat Nov 30 11:55:28 +0000 2019",
+    "results__extended_tweet__full_text": "Under the auspice of the European Footwear Confederation (CEC), nine Footwear Technology Centres from across Europe have agreed to join forces to push forward the footwear research agenda in Europe.\\nhttps://t.co/y3QgjqW6KE\\n#footwear\\n#research\\n#Europe https://t.co/A7yAcPjuBR",
+    "results__user__followers_count": 995,
+    "results__user__friends_count": 287,
+    "results__user__name": "APLF"
+  },
+  {
+    "results__created_at": "Tue Nov 26 07:34:04 +0000 2019",
+    "results__extended_tweet__full_text": "Safety Footwear Global Market Research and Forecast 20152025 Report Updated 01011970 Prices from USD $1936: SummaryThe Safety Footwear report provides an independent information about the Safety Footwear industry supported by extensive research on… https://t.co/LeIgC6z2dx",
+    "results__user__followers_count": 980,
+    "results__user__friends_count": 65,
+    "results__user__name": "CRO Contract Res."
+  },
+  {
+    "results__created_at": "Fri Nov 29 07:33:32 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 879,
+    "results__user__friends_count": 889,
+    "results__user__name": "CTC Groupe"
+  },
+  {
+    "results__created_at": "Tue Nov 26 09:32:05 +0000 2019",
+    "results__extended_tweet__full_text": "Sore feet? 👠👞👟\\n\\n🔓\"Prolonged occupational standing : the impact of time and footwear \" is now #openaccess in #usir https://t.co/oKrq8EsbKT #footwear #research https://t.co/O9d6Z2eTmM",
+    "results__user__followers_count": 879,
+    "results__user__friends_count": 975,
+    "results__user__name": "Open Research UoS"
+  },
+  {
+    "results__created_at": "Fri Dec 06 21:44:06 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 864,
+    "results__user__friends_count": 2228,
+    "results__user__name": "Michael Larkin"
+  },
+  {
+    "results__created_at": "Fri Nov 29 07:45:13 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 792,
+    "results__user__friends_count": 1142,
+    "results__user__name": "Glen"
+  },
+  {
+    "results__created_at": "Tue Nov 26 12:43:29 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 739,
+    "results__user__friends_count": 646,
+    "results__user__name": "Innovalia Group"
+  },
+  {
+    "results__created_at": "Thu Nov 21 13:10:30 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 705,
+    "results__user__friends_count": 113,
+    "results__user__name": "Univerzita T. Bati"
+  },
+  {
+    "results__created_at": "Mon Dec 09 15:54:49 +0000 2019",
+    "results__extended_tweet__full_text": "The US Adaptive Clothing and Footwear Market Represents a $47.3 Billion Largely Untapped Opportunity | Coresight Research: https://t.co/fZTwjnGCXO",
+    "results__user__followers_count": 672,
+    "results__user__friends_count": 768,
+    "results__user__name": "JasonsConnection"
+  },
+  {
+    "results__created_at": "Thu Nov 28 16:24:14 +0000 2019",
+    "results__extended_tweet__full_text": "We asked disabled users which category most of their poor #a11y digital experiences online fell into.\\n\\nThese were the top 3 responses:\\n1. Grocery shopping 🍎\\n2. Train travel 🚆\\n3. Clothing and footwear 👖👠\\n\\nSee our inclusive business case study here: https://t.co/NT6HyJcVAL https://t.co/6X3xlkLgfi",
+    "results__user__followers_count": 624,
+    "results__user__friends_count": 1333,
+    "results__user__name": "The Big Hack by Scope"
+  },
+  {
+    "results__created_at": "Mon Dec 02 10:39:08 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 594,
+    "results__user__friends_count": 595,
+    "results__user__name": "COTANCE"
+  },
+  {
+    "results__created_at": "Sun Nov 24 18:51:00 +0000 2019",
+    "results__extended_tweet__full_text": "SYMPOSIUM SUNDAY\\n\\nThis running research was presented at FBS2015 in Liverpool, titled ‘Effects of shoe bending stiffness and surface stiffness on lower extremity biomechanics during running.’\\n\\n#footwear #running\\nhttps://t.co/o14iIpHJZi",
+    "results__user__followers_count": 591,
+    "results__user__friends_count": 80,
+    "results__user__name": "Footwear Science"
+  },
+  {
+    "results__created_at": "Tue Dec 03 15:42:45 +0000 2019",
+    "results__extended_tweet__full_text": "Thanks, @GfellerCenter, for the feature. Be sure to tag us when you tweet about research from Footwear Science!\\n\\n#footwear https://t.co/fDjdvdm4qi",
+    "results__user__followers_count": 591,
+    "results__user__friends_count": 80,
+    "results__user__name": "Footwear Science"
+  },
+  {
+    "results__created_at": "Wed Nov 20 23:25:04 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 591,
+    "results__user__friends_count": 80,
+    "results__user__name": "Footwear Science"
+  },
+  {
+    "results__created_at": "Wed Nov 13 11:30:00 +0000 2019",
+    "results__extended_tweet__full_text": "#Athleticfootwear is exclusively used during physical or other sports activities to prevent injuries and enhance performance. It is made of leather, rubber, or synthetic material. Read @ https://t.co/ImYNi8bgBv https://t.co/Vx1GMBVUrz",
+    "results__user__followers_count": 571,
+    "results__user__friends_count": 601,
+    "results__user__name": "Radiant Insights"
+  },
+  {
+    "results__created_at": "Sun Dec 01 06:14:44 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 556,
+    "results__user__friends_count": 1315,
+    "results__user__name": "Rajesh Rathnam"
+  },
+  {
+    "results__created_at": "Mon Dec 09 09:13:27 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 473,
+    "results__user__friends_count": 681,
+    "results__user__name": "AEDHE Innovación"
+  },
+  {
+    "results__created_at": "Wed Nov 13 06:52:13 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 437,
+    "results__user__friends_count": 1636,
+    "results__user__name": "Healthystep"
+  },
+  {
+    "results__created_at": "Mon Dec 09 15:30:45 +0000 2019",
+    "results__extended_tweet__full_text": "Get your #FREE in store Foot scan! \\nHave you heard about our revolutionary #FootBalance machines? They’re designed to assess the unique contours of your feet, producing a 100% customised insole.\\nAvailable in selected stores. Find you nearest clinic here: https://t.co/RKfXEqMenK https://t.co/UimKYCmrJ5",
+    "results__user__followers_count": 2322,
+    "results__user__friends_count": 171,
+    "results__user__url": "",
+    "results__user__name": "Shuropody"
+  },
+  {
+    "results__created_at": "Fri Nov 29 19:08:57 +0000 2019",
+    "results__extended_tweet__full_text": "CT scan was weird. My foot went in and out of a massive machine that looked like a polo mint. Big ‘Philips’ logo so all I could bloody think of was Lumea adverts.",
+    "results__user__followers_count": 1704,
+    "results__user__friends_count": 2483,
+    "results__user__url": "",
+    "results__user__name": "Alice"
+  },
+  {
+    "results__created_at": "Mon Dec 02 04:24:55 +0000 2019",
+    "results__extended_tweet__full_text": "@TheDweck Scan the footwear people.  Billionaires my foot!🤣🤣🤣 Can’t see Melanoma’s.  She’s dragging her outfit.  These people have no clue how to dress.",
+    "results__user__followers_count": 286,
+    "results__user__friends_count": 125,
+    "results__user__url": "",
+    "results__user__name": "🍁Antonella🍁🇨🇦"
+  },
+  {
+    "results__created_at": "Mon Dec 02 16:53:54 +0000 2019",
+    "results__extended_tweet__full_text": "Stop by for a digital foot scan. We can check your arch pressure, shoe size and width, and many other pressure points. https://t.co/MwmLOqutms https://t.co/2NHqKHUPlW",
+    "results__user__followers_count": 236,
+    "results__user__friends_count": 218,
+    "results__user__url": "http://RockfordCoupons.com",
+    "results__user__name": "RockfordCoupons.com"
+  },
+  {
+    "results__created_at": "Sun Dec 01 07:38:45 +0000 2019",
+    "results__extended_tweet__full_text": "@Le_Scan_Sport @Le_Figaro Dans toute la région île de France s il n y a presque plus de joueurs blancs dans les clubs de foot amateur c est qu ils sont partis à cause d insultes racistes 👎🏿🧕🏿",
+    "results__user__followers_count": 202,
+    "results__user__friends_count": 678,
+    "results__user__url": "",
+    "results__user__name": "Duclartigue2"
+  },
+  {
+    "results__created_at": "Sun Dec 01 18:54:27 +0000 2019",
+    "results__extended_tweet__full_text": "",
+    "results__user__followers_count": 190,
+    "results__user__friends_count": 2241,
+    "results__user__url": "",
+    "results__user__name": "Michal Hackworth"
+  },
+  {
+    "results__created_at": "Sat Dec 07 16:03:03 +0000 2019",
+    "results__extended_tweet__full_text": "A professional foot scan can determine if you are wearing the correct shoe size &amp; if your feet could benefit from orthotics (inserts for shoes).  Stop your foot pain: https://t.co/vtpMr6kPg1 #FootPain #Orthotics https://t.co/NI5WA1WYDP",
+    "results__user__followers_count": 155,
+    "results__user__friends_count": 519,
+    "results__user__url": "http://www.stuckychiropractic.com/",
+    "results__user__name": "Stucky Chiropractic"
+  },
+  {
+    "results__created_at": "Tue Nov 26 22:44:09 +0000 2019",
+    "results__extended_tweet__full_text": "@beadagainstfash If nots a very particular method of tracing i figure you could have the client trace their foot n scan it to email n send it to you?",
+    "results__user__followers_count": 130,
+    "results__user__friends_count": 378,
+    "results__user__url": "",
+    "results__user__name": "Nhilemelukon Kenthit"
+  },
+  {
+    "results__created_at": "Sat Nov 30 22:40:33 +0000 2019",
+    "results__extended_tweet__full_text": "@WoodysGamertag They have a machine that makes a scan of your feet and measures all your stats like arch height foot length, where the balls of your feet are, ect",
+    "results__user__followers_count": 80,
+    "results__user__friends_count": 258,
+    "results__user__url": "http://twitch.tv/Riven4s",
+    "results__user__name": "Riven4s"
+  },
+  {
+    "results__created_at": "Mon Dec 09 23:42:18 +0000 2019",
+    "results__extended_tweet__full_text": "Wow I highly recommend Fleet Feet in downtown sac to get the exact running shoes for your foot.They scan ur feet and have you do a walking test to find the perfect shoe for you.Great customer service too.If anyones into running or wanting to get into it go there go there go there",
+    "results__user__followers_count": 79,
+    "results__user__friends_count": 86,
+    "results__user__url": "http://www.demilovato.com",
+    "results__user__name": "Jacob is Jacob"
+  },
+  {
+    "results__created_at": "Tue Nov 26 16:29:58 +0000 2019",
+    "results__extended_tweet__full_text": "Call (252)430-8000 to schedule your own, personalized Foot Levelers Foot Scan! Your feet (and your knees, and your hips, and your back, and even your neck) will thank you for it! https://t.co/s50QHTGBJK",
+    "results__user__followers_count": 22,
+    "results__user__friends_count": 37,
+    "results__user__url": "",
+    "results__user__name": "HendWellnessCenter"
+  },
+  {
+    "results__created_at": "Thu Nov 28 13:44:07 +0000 2019",
+    "results__extended_tweet__full_text": "CuraFoot: India's leading Foot Care specialists now at Apollo Gleneagles Hospital, Apollo Clinic, select Bata Stores and CuraFoot Clinic.\\n✔ Diabetic Foot Checkup\\n✔ 3D Foot Scan \\n✔ AI-Enabled Assessment \\n✔ Footwear &amp; Custom Insoles https://t.co/MAheFv3qMB",
+    "results__user__followers_count": 16,
+    "results__user__friends_count": 77,
+    "results__user__url": "https://curafoot.in/",
+    "results__user__name": "Curafoot"
+  },
+  {
+    "results__created_at": "Thu Dec 05 05:20:01 +0000 2019",
+    "results__extended_tweet__full_text": "After a while as these people matured and grew older you began to see the names go away and become their actual names , considering certain colleges / professions do scan your internet foot print , unless of course your field isn’t that demanding no shade intended. Fact only..",
+    "results__user__followers_count": 12,
+    "results__user__friends_count": 12,
+    "results__user__url": "",
+    "results__user__name": "Chrys Henriques"
+  },
+  {
+    "results__created_at": "Tue Dec 03 14:40:05 +0000 2019",
+    "results__extended_tweet__full_text": "Come into any of our five Puget Sound locations for a complimentary foot scan, so we can try and identify the cause of your foot, leg or back pain. https://t.co/MWrJoAgljZ",
+    "results__user__followers_count": 12,
+    "results__user__friends_count": 2,
+    "results__user__url": "http://www.soleperfectionshoes.com",
+    "results__user__name": "SolePerfection Shoes"
+  }
+
+
+]
+var output = []
+
+for(var i = 0; i < datapiece2.length; i++) {
+    var newData = {
+        "user_name": datapiece2[i]["results__user__name"],
+        "tweets": datapiece2[i]["results__extended_tweet__full_text"],
+        "followers_count": datapiece2[i]["results__user__followers_count"]
+    }
+    output.push(newData);
+}
+return output;
+
+}
+
+
+var chart = new Chart('chart-0', {
+    type: 'bubble',
+    data: data,
+    options: options
+});
+	</script>
+</body>
+</html>
